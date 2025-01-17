@@ -16,7 +16,7 @@ def authenticate_user(request: Request):
         jwt_data = jwt.decode(
             jwt=token,
             key=os.getenv('JWT_SECRET_KEY'),
-            algorithms="HS256"
+            algorithms=["HS256"]
         )
         user_exists = user_repository.user_exists(jwt_data["username"])
         if not user_exists:
