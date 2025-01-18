@@ -18,21 +18,24 @@ class VaultRepository:
 
     def fetch_all_vault_items(self):
         all_items = self.vault_collection.find()
-        return [parse_db_response(item) for item in all_items]
+        return [self.__parse_vault_item(item) for item in all_items]
 
     def fetch_vault_item(self, item_id):
         requested_item = self.vault_collection.find_one({"_id": ObjectId(item_id)})
         if requested_item is not None:
-            parsed_item = parse_db_response(requested_item)
-            if parsed_item["type"] == VaultItemType.PASSWORD.value:
-                with open('encryption.txt', 'r') as file:
-                    encryption_key = file.read().strip()
-                    crypter = Fernet(encryption_key)
-                    encrypted_password = parsed_item["password"]
-                    decrypted_password = crypter.decrypt(bytes(encrypted_password, 'utf8'))
-                    parsed_item["password"] = str(decrypted_password, 'utf8')
-            return parsed_item
+            return self.__parse_vault_item(requested_item)
         return None
+    
+    def __parse_vault_item(self, vault_item):
+        parsed_item = parse_db_response(vault_item)
+        if parsed_item["type"] == VaultItemType.PASSWORD.value:
+            with open('encryption.txt', 'r') as file:
+                encryption_key = file.read().strip()
+                crypter = Fernet(encryption_key)
+                encrypted_password = parsed_item["password"]
+                decrypted_password = crypter.decrypt(bytes(encrypted_password, 'utf8'))
+                parsed_item["password"] = str(decrypted_password, 'utf8')
+        return parsed_item
 
     def create_password(self, name: str, folder: str, url: str, email: str, password: str):
         with open('encryption.txt', 'r') as file:
